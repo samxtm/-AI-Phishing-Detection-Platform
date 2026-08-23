@@ -25,6 +25,47 @@ An enterprise-grade, multi-tenant cybersecurity application designed to detect a
 * **Reporting:** ReportLab (Dynamic PDF compilation).
 * **Database & Auth:** SQLite (Relational storage with foreign-key isolation and secure credential validation).
 
+
+⚙️ Installation & Local Setup
+Clone the Repository:
+
+Bash
+git clone [https://github.com/samxtm/-AI-Phishing-Detection-Platform.git](https://github.com/samxtm/-AI-Phishing-Detection-Platform.git)
+cd -AI-Phishing-Detection-Platform
+Create and Activate a Virtual Environment:
+
+Bash
+python -m venv venv
+# On Windows (PowerShell):
+.\venv\Scripts\Activate.ps1
+Install Dependencies:
+
+Bash
+pip install -r requirements.txt
+Ensure Ollama is Running Locally:
+Make sure Ollama is installed and running with Llama 3 pulled:
+
+Bash
+ollama pull llama3
+Run the Application:
+
+Bash
+streamlit run app.py
+🛠️ User & Database Management (Admin Guide)
+If you need to check registered users or manage database records directly from your local environment without using the UI app:
+
+Visual Inspection: Open phishing_detection.db using DB Browser for SQLite.
+
+Command-Line Tool: Run the local admin script in your terminal:
+
+Bash
+python admin.py
+This interactive utility allows you to list all registered users and safely delete user accounts along with their associated scan histories.
+
+🔒 Security & Privacy Notice
+Local-First AI: Threat analysis runs locally via Ollama, ensuring sensitive email contents or private URLs are never sent to third-party cloud APIs.
+
+Safe URL Inspection: The URL analyzer evaluates structural syntax and domain anomalies without triggering automated web crawlers or browser-based drive-by downloads.
 ---
 
 ## 📂 Project Structure
