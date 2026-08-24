@@ -1,5 +1,5 @@
 # ============================================================
-# AI PHISHING DETECTION PLATFORM
+# 🛡️ AI PHISHING DETECTION PLATFORM
 # Responsive Desktop + Mobile Streamlit Application
 # ============================================================
 
@@ -22,9 +22,10 @@ from ollama_ai import get_ai_explanation
 from src.website_analyzer import analyze_website_url
 from database.database import initialize_database, save_scan, get_all_scans, clear_scans, authenticate_user
 from auth import show_authentication
+from chat_assistant import render_floating_chatbot  # <-- Floating chat assistant import
 
 # ============================================================
-# PAGE CONFIGURATION
+# ⚙️ PAGE CONFIGURATION
 # ============================================================
 st.set_page_config(
     page_title="AI Phishing Detection Platform",
@@ -34,7 +35,7 @@ st.set_page_config(
 )
 
 # ============================================================
-# MOBILE + DESKTOP CSS (UI STYLING)
+# 🎨 MOBILE + DESKTOP CSS (UI STYLING)
 # ============================================================
 st.markdown(
     """
@@ -47,9 +48,7 @@ st.markdown(
     }
 
     /* TYPOGRAPHY */
-    h1, h2, h3 {
-        font-family: 'Inter', sans-serif;
-    }
+    h1, h2, h3 { font-family: 'Inter', sans-serif; }
     h1 { font-weight: 700; color: #1E3A8A; }
     h2 { font-weight: 650; margin-top: 1rem; }
 
@@ -74,9 +73,7 @@ st.markdown(
         box-shadow: 0 4px 6px rgba(0,0,0,0.05);
         transition: transform 0.2s ease;
     }
-    [data-testid="stMetric"]:hover {
-        transform: scale(1.02);
-    }
+    [data-testid="stMetric"]:hover { transform: scale(1.02); }
     [data-testid="stMetricLabel"] {
         font-weight: 600;
         font-size: 1.1rem;
@@ -113,12 +110,12 @@ st.markdown(
 )
 
 # ============================================================
-# DATABASE INITIALIZATION
+# 🗄️ DATABASE INITIALIZATION
 # ============================================================
 initialize_database()
 
 # ============================================================
-# AUTHENTICATION STATE
+# 🔐 AUTHENTICATION STATE MANAGEMENT
 # ============================================================
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
@@ -145,9 +142,21 @@ if current_user_id is None:
     st.error("⚠️ Unable to identify the logged-in user.")
     st.stop()
 
+# Extract clean display name (removes email domain if registered using email)
+display_name = current_username.split("@")[0] if current_username else "User"
 
 # ============================================================
-# PDF REPORT GENERATOR
+# 🤖 AI AGENT CONTEXT — SESSION STATE
+# Holds the most recent Email/Website analysis so the floating
+# AI chat assistant can reference real results instead of giving
+# generic answers. Does NOT touch scan history in the database.
+# ============================================================
+if "current_analysis" not in st.session_state:
+    st.session_state.current_analysis = None
+
+
+# ============================================================
+# 📄 PDF REPORT GENERATOR LOGIC
 # ============================================================
 def create_pdf_report(report_type, scan_time, score, risk_level, details, ai_explanation="", extra_data=None):
     buffer = BytesIO()
@@ -160,11 +169,11 @@ def create_pdf_report(report_type, scan_time, score, risk_level, details, ai_exp
     small_style = ParagraphStyle("SmallBody", parent=styles["BodyText"], fontSize=9, leading=12)
 
     story = []
-    
+
     story.append(Paragraph("AI PHISHING DETECTION REPORT", title_style))
     story.append(Paragraph(f"<b>Report Type:</b> {escape(str(report_type))}", normal_style))
     story.append(Paragraph(f"<b>Scan Time:</b> {escape(str(scan_time))}", normal_style))
-    story.append(Paragraph(f"<b>User:</b> {escape(str(current_username))}", normal_style))
+    story.append(Paragraph(f"<b>User:</b> {escape(str(display_name))}", normal_style))
     story.append(Spacer(1, 15))
 
     story.append(Paragraph("Risk Assessment", heading_style))
@@ -214,7 +223,7 @@ def create_pdf_report(report_type, scan_time, score, risk_level, details, ai_exp
 
 
 # ============================================================
-# WEBSITE AI EXPLANATION PROMPT
+# 🤖 WEBSITE AI EXPLANATION PROMPT (LLAMA 3)
 # ============================================================
 def get_website_ai_explanation(website_result):
     findings = website_result.get("findings", [])
@@ -247,19 +256,37 @@ Explain:
 
 
 # ============================================================
-# SIDEBAR UI
+# 📍 SIDEBAR UI & NAVIGATION
 # ============================================================
 with st.sidebar:
     st.image("https://cdn-icons-png.flaticon.com/512/3251/3251347.png", width=60)
     st.title("Phishing Detector")
-    st.success(f"👤 Logged in as: **{current_username}**")
-    
+    st.success(f"👤 Logged in as: **{display_name}**")
+
     st.divider()
+
+    # --- RISK LEVEL GUIDE ---
     st.subheader("⚠️ Risk Level Guide")
     st.markdown("🟢 **LOW** (0–39)<br>🟡 **MEDIUM** (40–69)<br>🔴 **HIGH** (70–100)", unsafe_allow_html=True)
     st.divider()
-    
-    if st.button("🚪 Logout", width="stretch", type="secondary"):
+
+    # --- ABOUT SECTION ---
+    with st.expander("ℹ️ About This Project"):
+        st.markdown(
+            """
+            **AI Phishing Platform v2.0**  
+            By **NOOB🤡**.
+
+            * **AI Engine:** Llama 3 via Ollama
+            * **Analysis:** Heuristic rule engines & URL structural parsing
+            * **Security:** Local-first processing & SQLite tenant isolation
+            """
+        )
+
+    st.divider()
+
+    # --- LOGOUT BUTTON ---
+    if st.button("🚪 Logout", type="secondary", use_container_width=True, key="btn_logout_sidebar"):
         st.session_state.logged_in = False
         st.session_state.user = None
         st.rerun()
@@ -269,53 +296,61 @@ with st.sidebar:
 
 
 # ============================================================
-# APPLICATION HEADER
+# 🌟 APPLICATION HEADER
 # ============================================================
 st.title("🛡️ AI Phishing Detection Platform")
-st.markdown(f"Welcome back, **{current_username}**. Protect yourself by analyzing suspicious emails and URLs using rule-based algorithms and AI.")
+st.markdown(f"Welcome back, **{display_name}**. Protect yourself by analyzing suspicious emails and URLs using rule-based algorithms and AI.")
 
 
 # ============================================================
-# TOP NAVIGATION BAR
+# 🧭 TOP NAVIGATION BAR
 # ============================================================
-st.write("") 
+st.write("")
 selected_nav = st.radio(
     "Main Menu Navigation",
     ["📊 Security Dashboard", "📧 Email Analyzer", "🌐 Website Analyzer"],
     horizontal=True,
     label_visibility="collapsed"
 )
-st.write("") 
+st.write("")
+
+# ============================================================
+# 🤖 AI AGENT CHAT — FLOATING BUTTON
+# Renders the persistent bottom-right floating chat button/popover.
+# ============================================================
+render_floating_chatbot()
+
 st.divider()
 
 
 # ============================================================
-# VIEW 1: 📊 SECURITY DASHBOARD (WITH PASSWORD-PROTECTED CLEAR HISTORY)
+# 📊 VIEW 1: SECURITY DASHBOARD
 # ============================================================
 if selected_nav == "📊 Security Dashboard":
-    
+
     col_title, col_btn = st.columns([3, 1])
     with col_title:
         st.subheader("📊 Security Dashboard Overview")
     with col_btn:
+
+        # --- CLEAR HISTORY TOGGLE ---
         if "show_clear_confirm" not in st.session_state:
             st.session_state.show_clear_confirm = False
 
         if st.button("🗑️ Clear History", type="secondary", use_container_width=True):
             st.session_state.show_clear_confirm = not st.session_state.show_clear_confirm
 
-    # Password confirmation box when clear history is toggled
+    # --- PASSWORD VERIFICATION FOR CLEAR HISTORY ---
     if st.session_state.get("show_clear_confirm", False):
         with st.container(border=True):
             st.warning("⚠️ Security Verification: Enter your password to clear all scan history.")
             entered_password = st.text_input("Account Password:", type="password", key="clear_history_pwd")
-            
+
             col_confirm, col_cancel = st.columns(2)
             with col_confirm:
                 if st.button("Confirm Wipe", type="primary", use_container_width=True):
-                    # 🛠️ Authenticate against database using existing function
                     verified_user = authenticate_user(current_username, entered_password)
-                    
+
                     if verified_user:
                         try:
                             clear_scans(user_id=current_user_id)
@@ -331,6 +366,7 @@ if selected_nav == "📊 Security Dashboard":
                     st.session_state.show_clear_confirm = False
                     st.rerun()
 
+    # --- FETCH DASHBOARD DATA ---
     try:
         dashboard_scans = get_all_scans(user_id=current_user_id)
     except Exception as error:
@@ -352,6 +388,7 @@ if selected_nav == "📊 Security Dashboard":
             medium_risk = len(dashboard_df[dashboard_df["risk_level"] == "MEDIUM RISK"])
             low_risk = len(dashboard_df[dashboard_df["risk_level"] == "LOW RISK"])
 
+    # --- RENDER METRICS ---
     with st.container(border=True):
         col1, col2, col3, col4 = st.columns(4)
         with col1:
@@ -363,6 +400,7 @@ if selected_nav == "📊 Security Dashboard":
         with col4:
             st.metric("🌐 Website Scans", website_scans)
 
+    # --- RENDER RECENT ACTIVITY TABLE ---
     if not dashboard_df.empty:
         with st.container(border=True):
             st.subheader("🕒 Recent Scan Activity")
@@ -373,7 +411,7 @@ if selected_nav == "📊 Security Dashboard":
 
 
 # ============================================================
-# VIEW 2: 📧 EMAIL ANALYZER
+# 📧 VIEW 2: EMAIL ANALYZER
 # ============================================================
 elif selected_nav == "📧 Email Analyzer":
 
@@ -401,11 +439,12 @@ elif selected_nav == "📧 Email Analyzer":
                     findings_count=len(result.get("indicators", []))
                 )
 
+            # --- RENDER EMAIL RESULTS ---
             with st.container(border=True):
                 st.subheader("📊 Threat Assessment")
                 email_score = result["score"]
                 email_risk = result["risk_level"]
-                
+
                 c1, c2 = st.columns([1, 3])
                 with c1:
                     st.metric("Risk Score", f"{email_score}/100")
@@ -422,6 +461,7 @@ elif selected_nav == "📧 Email Analyzer":
                 else:
                     st.success("No suspicious indicators detected.")
 
+            # --- FETCH Llama 3 EXPLANATION ---
             with st.expander("🤖 Llama 3 Deep Analysis", expanded=True):
                 with st.spinner("🤖 Llama 3 is analyzing context..."):
                     try:
@@ -431,13 +471,26 @@ elif selected_nav == "📧 Email Analyzer":
                         st.error(f"AI analysis failed: {error}")
                         explanation = "AI Analysis unavailable."
 
+            st.session_state.current_analysis = {
+                "type": "Email",
+                "target": "Email Scan",
+                "score": result["score"],
+                "risk_level": result["risk_level"],
+                "findings": result.get("indicators", []),
+                "extra": {
+                    "Text Analysis Score": f"{result.get('text_score', 0)}/100",
+                    "URLs Found": len(result.get("urls", [])),
+                },
+            }
+
+            # --- PDF GENERATION ---
             email_extra_data = {
-                "User": current_username,
+                "User": display_name,
                 "Text Analysis Score": f"{result.get('text_score', 0)}/100",
                 "URLs Found": len(result.get("urls", []))
             }
             email_pdf = create_pdf_report("Phishing Email Analysis", scan_time, result["score"], result["risk_level"], result.get("indicators", []), explanation, email_extra_data)
-            
+
             st.download_button(
                 label="📥 Download Professional PDF Report",
                 data=email_pdf,
@@ -448,7 +501,7 @@ elif selected_nav == "📧 Email Analyzer":
 
 
 # ============================================================
-# VIEW 3: 🌐 WEBSITE ANALYZER
+# 🌐 VIEW 3: WEBSITE ANALYZER
 # ============================================================
 elif selected_nav == "🌐 Website Analyzer":
 
@@ -476,11 +529,12 @@ elif selected_nav == "🌐 Website Analyzer":
                     findings_count=len(website_result.get("findings", []))
                 )
 
+            # --- RENDER WEBSITE RESULTS ---
             with st.container(border=True):
                 st.subheader("📊 URL Threat Assessment")
                 web_score = website_result.get("score", 0)
                 web_risk = website_result.get("risk_level", "UNKNOWN")
-                
+
                 c1, c2 = st.columns([1, 3])
                 with c1:
                     st.metric("Risk Score", f"{web_score}/100")
@@ -500,6 +554,7 @@ elif selected_nav == "🌐 Website Analyzer":
                 else:
                     st.success("No structural red flags found.")
 
+            # --- FETCH Llama 3 EXPLANATION ---
             with st.expander("🤖 Llama 3 Domain Analysis", expanded=True):
                 with st.spinner("🤖 Generating contextual URL report..."):
                     try:
@@ -509,13 +564,26 @@ elif selected_nav == "🌐 Website Analyzer":
                         st.error(f"AI analysis failed: {error}")
                         web_explanation = "AI Analysis unavailable."
 
+            st.session_state.current_analysis = {
+                "type": "Website",
+                "target": website_result.get("domain", "N/A"),
+                "score": web_score,
+                "risk_level": web_risk,
+                "findings": website_result.get("findings", []),
+                "extra": {
+                    "Domain": website_result.get("domain", "N/A"),
+                    "Protocol": website_result.get("protocol", "N/A"),
+                },
+            }
+
+            # --- PDF GENERATION ---
             web_extra_data = {
-                "User": current_username,
+                "User": display_name,
                 "Domain": website_result.get("domain", "N/A"),
                 "Protocol": website_result.get("protocol", "N/A")
             }
             web_pdf = create_pdf_report("Phishing URL Analysis", scan_time, web_score, web_risk, website_result.get("findings", []), web_explanation, web_extra_data)
-            
+
             st.download_button(
                 label="📥 Download URL PDF Report",
                 data=web_pdf,
