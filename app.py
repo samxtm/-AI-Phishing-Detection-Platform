@@ -275,7 +275,7 @@ with st.sidebar:
         st.markdown(
             """
             **AI Phishing Platform v2.0**  
-            By **NOOB🤡**.
+            By **AMS👨‍💻👨‍💻👨‍💻**.
 
             * **AI Engine:** Llama 3 via Ollama
             * **Analysis:** Heuristic rule engines & URL structural parsing
