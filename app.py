@@ -1,5 +1,6 @@
 # ============================================================
 # 🛡️ AI PHISHING DETECTION PLATFORM
+# 🛡️ AI PHISHING DETECTION PLATFORM
 # Responsive Desktop + Mobile Streamlit Application
 # ============================================================
 
@@ -264,6 +265,8 @@ with st.sidebar:
     st.success(f"👤 Logged in as: **{display_name}**")
 
     st.divider()
+
+    # --- RISK LEVEL GUIDE ---
 
     # --- RISK LEVEL GUIDE ---
     st.subheader("⚠️ Risk Level Guide")
