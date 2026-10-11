@@ -182,7 +182,7 @@ def generate_ai_response(user_message: str, chat_history: list, analysis: dict |
 QUICK_QUESTIONS = [
     ("🔍 Explain my latest analysis", "Can you explain my latest analysis result and why it got that risk score?"),
     ("🎣 What is phishing?", "What is phishing?"),
-    ("🌐 Is this website dangerous?", "How do I tell if a website is dangerous?"),
+    ("🌐 Is this website dangerous or not?", "How do I tell if a website is dangerous?"),
     ("📧 How do I spot a phishing email?", "How do I identify a phishing email?"),
     ("🛡️ How can I protect myself?", "How can I protect myself from phishing attacks?"),
 ]
