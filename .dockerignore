@@ -13,3 +13,9 @@ venv/
 tests/
 *.log
 .DS_Store
+*.db
+database/*.db
+phishing_detection.db
+dist/
+build/
+*.spec
